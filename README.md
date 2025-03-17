@@ -11,12 +11,12 @@ The App runs in 4 stages:
 3. Emotional states conversion to knowledge candidates.
 4. Selecting the most appropriate knowledge candidate to nudge the user with.
 
-## Architecture diagram
+## Flow diagram
 
 ```mermaid
-flowchart TD
+flowchart
     A[Data collection from Apple Watch] --> B[Emotion Detected?]
-    B --Yes --> C[Collect in emotion set for the day]
+    B --Yes --> C[Collect emotion set for the day]
     B --No --> A[Do Nothing]
     C --> D[Is time for daily/periodic knowledge ritual]  
     D --Yes --> E[Collect periodic emotion set]
@@ -27,13 +27,15 @@ flowchart TD
     H --> I[User interaction workflow]
 ```
 
-Sahasraara -> Bliss
-Ajna -> Awareness, Anger
-Vishuddha -> Gratefulness, Sadness
-Anahata -> Love, Fear, Hatred
-Manipura -> Joy, Generosity, Jealousy, Greed
-Swadhisthana -> Creativity, Lust
-Mooladhara -> Interest in Life, Depression
+|Chakra|Emotion|
+|-----------|-------|
+|Sahasraara | Bliss |
+| Ajna | Awareness, Anger |
+| Vishuddha | Gratefulness, Sadness |
+| Anahata | Love, Fear, Hatred |
+| Manipura | Joy, Generosity, Jealousy, Greed |
+| Swadhisthana | Creativity, Lust |
+| Mooladhara | Interest in Life, Depression |
 
 **Cost Breakdown Per Person:**
 
