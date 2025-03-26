@@ -36,11 +36,3 @@ flowchart
 | Manipura | Joy, Generosity, Jealousy, Greed |
 | Swadhisthana | Creativity, Lust |
 | Mooladhara | Interest in Life, Depression |
-
-**Cost Breakdown Per Person:**
-
-![Chakra_Energy_Centers_and_Sensor_Mapping](https://github.com/user-attachments/assets/3e877524-f085-4190-995e-91efa2608a6f)
-
-**Instruments for Each Chakra:**
-
-![Screen Shot 2025-03-16 at 4 52 41 PM](https://github.com/user-attachments/assets/c7364159-e94f-485b-b1bc-3eac8fbb9720)
