@@ -5,3 +5,5 @@ data/
 fa_server_llm.py
 rag_app/
 explorations
+
+.ipynb_checkpoints/
