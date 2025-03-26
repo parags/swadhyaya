@@ -31,7 +31,8 @@ def get_llama_response(word, text):
     prompt = f"{system_prompt}\n\nWord: {word}\nText: {text}\n\nPlease process this information and provide insights."
 
     payload = {
-        "model": "llama3.2:1b",  # Model name
+        # "model": "llama3.2:1b",  # Model name
+        "model": "llama3.2",  # Model name
         "prompt": prompt,
         "max_tokens": 500  # Control response length
     }
@@ -42,7 +43,7 @@ def get_llama_response(word, text):
     if response.status_code == 200:
         return response.json()['choices'][0]['text']
     else:
-        st.error("Failed to get response from LLaMA model.")
+        st.error("Failed to get response from LLaMA model." + str(response.text))
         return None
 
 # Streamlit UI
