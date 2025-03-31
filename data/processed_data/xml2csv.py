@@ -13,7 +13,12 @@ records = [i.attrib for i in root.iter("Record")]
 
 records_df = pd.DataFrame(records)
 records_df.drop(['sourceName', 'sourceVersion', 'device'], axis=1, inplace=True)
+date_col = ['creationDate', 'startDate', 'endDate']
+records_df[date_col] = records_df[date_col].apply(pd.to_datetime)
+#print(records_df[date_col])
+
 
 results = records_df.query('type in ["HKQuantityTypeIdentifierHeartRate", "HKQuantityTypeIdentifierHeartRateVariabilitySDNN","HKCategoryTypeIdentifierSleepAnalysis"]')
+#print(results)
 
 results.to_csv(path + '/export.csv', index=False)
