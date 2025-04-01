@@ -48,6 +48,11 @@ def query_chromadb(query_text: str, top_k: int = 6):
 # Function to get response from Groq's LLaMA model
 def get_llama_response(word, userContext, context):
     """Fetch response from Groq's API using LLaMA models."""
+    # system_prompt = (
+    #     "You are a helpful emotional support companion. You will be provided with the user's emotion along with an explaination of how the user feels as userContext. You will also be provided with a set of documents as context. You job is to look at the emotion and userContext and pick the most appropriate single document from the set of documents and return that document verbatim. DO NOT add any extra word of your own."
+    #     You MUST answer ONLY based on the context provided to you."
+    #     "Please do not include any external information, and stay within the context provided. Using the Word and Context provided to you, summarize nicely like Guruji, very politely and compassionately, advising his disciple."
+    # )
     system_prompt = (
     "You are an assistant tasked with selecting and returning exactly one document from a provided list.\n\n"
     "**Instructions:**\n"
