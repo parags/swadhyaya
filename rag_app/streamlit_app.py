@@ -22,9 +22,11 @@ chroma_client = chromadb.PersistentClient(path="./chroma_db")  # Persistent stor
 collection = chroma_client.get_or_create_collection(name="rag_chunks")
 
 
+
 # Groq API Configuration
-GROQ_API_KEY = "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"     # Set this in your environment variables
-print(f"GROQ_API_KEY: {GROQ_API_KEY}")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Ensure this is set in your environment variables
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is missing. Set it in your environment variables.")
 
 # Initialize the Groq client
 client = Groq()
