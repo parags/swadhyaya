@@ -49,20 +49,19 @@ def query_chromadb(query_text: str, top_k: int = 6):
 def get_llama_response(word, userContext, context):
     """Fetch response from Groq's API using LLaMA models."""
     system_prompt = (
-        "You are an assistant that must return **one full document exactly as provided** from a set of documents.\n\n"
-        "- You will receive a list of documents under 'context'.\n"
-        "- Your task is to **select one document that best matches the user's emotion and userContext**.\n"
-        "- **Return the selected document exactly as provided, with no modifications, summarization, or additional words.**\n\n"
-        "**Rules:**\n"
-        "1. **Copy and return one document verbatim** from the list.\n"
-        "2. **Do not paraphrase, summarize, or add extra words.**\n"
-        "3. **Do not change the wording, structure, or formatting of the document.**\n\n"
-        "---\n"
-        "**User Query:**\n"
-        f"Emotion detected: {word}\n"
-        f"User explanation: {userContext}\n"
-        "Documents to choose from:\n"
-        f"{context}\n"
+    "You are an assistant tasked with selecting and returning exactly one document from a provided list.\n\n"
+    "**Instructions:**\n"
+    "1. You will receive multiple documents labeled as 'Document 1', 'Document 2', etc.\n"
+    "2. Your task is to select the ONE document that best aligns with the user's emotion and context.\n"
+    "3. **You MUST return the complete text of the chosen document EXACTLY as provided.**\n"
+    "4. **Do NOT return a document number. Do NOT summarize. Do NOT modify the document in any way.**\n\n"
+    "---\n"
+    "**User Query:**\n"
+    f"Emotion detected: {word}\n"
+    f"User explanation: {userContext}\n\n"
+    "**Documents to choose from:**\n"
+    f"{context}\n\n"
+    "**Reply with the FULL text of the selected document. Do NOT add any explanations or labels.**"
     )    
 
     print(f"LLM Prompt: {system_prompt}")
@@ -79,7 +78,7 @@ def get_llama_response(word, userContext, context):
         messages=messages,
         temperature=0.0,
         max_completion_tokens=2048,
-        top_p=0.9,
+        top_p=1.0,
         stream=True,
         stop=None,
     )
@@ -110,7 +109,8 @@ def search(
     print(f"Retrieved {len(results)} results from ChromaDB.")
 
     # Extract the document texts
-    context = " ".join([res["text"] for res in results])  
+    #context = " ".join([res["text"] for res in results])  
+    context = "\n\n".join([f"Document {i+1}: {res['text']}" for i, res in enumerate(results)])
     llama_response = get_llama_response(word, userContext, context)
 
     print(f"Selected Document by LLM: {llama_response}")
