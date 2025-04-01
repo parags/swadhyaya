@@ -16,8 +16,9 @@ chroma_client = chromadb.PersistentClient(path="./chroma_db")  # Persistent stor
 collection = chroma_client.get_or_create_collection(name="rag_chunks")
 
 # Groq API Configuration
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Set this in your environment variables
-print(f"GROQ_API_KEY: {GROQ_API_KEY}")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Ensure this is set in your environment variables
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is missing. Set it in your environment variables.")
 
 # Initialize the Groq client
 client = Groq()
@@ -25,7 +26,7 @@ client = Groq()
 # Load Sentence Transformer model for embeddings
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Lightweight & effective
 
-def query_chromadb(query_text: str, top_k: int = 3):
+def query_chromadb(query_text: str, top_k: int = 6):
     """Searches ChromaDB for the top-k closest matches to the input query."""
     query_embedding = embedding_model.encode(query_text).tolist()
     results = collection.query(
@@ -34,7 +35,7 @@ def query_chromadb(query_text: str, top_k: int = 3):
     )
 
     response = []
-    print(f"results: {results}")
+    print(f"ChromaDB Query Results: {results}")
     for i, doc in enumerate(results["documents"][0]):
         metadata = results["metadatas"][0][i]
         response.append({
@@ -45,22 +46,31 @@ def query_chromadb(query_text: str, top_k: int = 3):
     return response
 
 # Function to get response from Groq's LLaMA model
-def get_llama_response(word,userContext, context):
+def get_llama_response(word, userContext, context):
     """Fetch response from Groq's API using LLaMA models."""
-    # system_prompt = (
-    #     "You are a helpful emotional support companion. You will be provided with the user's emotion along with an explaination of how the user feels as userContext. You will also be provided with a set of documents as context. You job is to look at the emotion and userContext and pick the most appropriate single document from the set of documents and return that document verbatim. DO NOT add any extra word of your own."
-    #     You MUST answer ONLY based on the context provided to you."
-    #     "Please do not include any external information, and stay within the context provided. Using the Word and Context provided to you, summarize nicely like Guruji, very politely and compassionately, advising his disciple."
-    # )
     system_prompt = (
-        "You are a helpful emotional support companion. You will be provided with the user's emotion in the emotion field. You will also be provided with an explaination of how the user feels in the userContext field. You will also be provided with a set of documents under the context field. You job is to look at the emotion and userContext and pick the most appropriate single document from the set of documents and return that document verbatim. DO NOT add any extra word of your own."
-    )
-    prompt = f"{system_prompt}\n\nEmotion detected by health metrics as emotion: {word}\n \n Additional speech to text input from the user explaining how they actually feel as userContext: {userContext}\n\nContext: {context}\n\n"
-    print(f"prompt: {prompt}")
+        "You are an assistant that must return **one full document exactly as provided** from a set of documents.\n\n"
+        "- You will receive a list of documents under 'context'.\n"
+        "- Your task is to **select one document that best matches the user's emotion and userContext**.\n"
+        "- **Return the selected document exactly as provided, with no modifications, summarization, or additional words.**\n\n"
+        "**Rules:**\n"
+        "1. **Copy and return one document verbatim** from the list.\n"
+        "2. **Do not paraphrase, summarize, or add extra words.**\n"
+        "3. **Do not change the wording, structure, or formatting of the document.**\n\n"
+        "---\n"
+        "**User Query:**\n"
+        f"Emotion detected: {word}\n"
+        f"User explanation: {userContext}\n"
+        "Documents to choose from:\n"
+        f"{context}\n"
+    )    
+
+    print(f"LLM Prompt: {system_prompt}")
+
     # Create the message payload
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": f"Emotion: {word}\nUser Context: {userContext}\nAvailable Documents: {context}"}
     ]
 
     # Call the Groq API with the correct parameters
@@ -68,31 +78,47 @@ def get_llama_response(word,userContext, context):
         model="llama3-8b-8192",
         messages=messages,
         temperature=0.0,
-        max_completion_tokens=1024,
+        max_completion_tokens=2048,
         top_p=0.9,
         stream=True,
         stop=None,
     )
 
-    # Handle the response (printing the stream in chunks)
+    # Handle the response (streaming output)
     response_text = ""
     for chunk in completion:
         response_text += chunk.choices[0].delta.content or ""
     
-    return response_text
+    return response_text.strip()
 
 @app.get("/search")
-def search(word: str = Query(..., description="Word to search for"), userContext: str = Query(..., description="Additional voice context from the user"), top_k: int = Query(3, description="Number of top results to return")):
+def search(
+    word: str = Query(..., description="Word to search for"),
+    userContext: str = Query(..., description="Additional voice context from the user"),
+    top_k: int = Query(6, description="Number of top results to return")  # Defaulting to 6
+):
     """FastAPI endpoint to search for relevant text in ChromaDB."""
-    print(f"inside @app.get().search, word: {word}, top_k: {top_k}")
-    word = word+userContext
-    results = query_chromadb(word, top_k)
-    print(f"results:{results}")
-    context = " ".join([res["text"] for res in results])  # Merge chunks as context
+    print(f"Inside /search - Emotion: {word}, User Context: {userContext}, Top K: {top_k}")
+
+    # Concatenating word and user context for a better query
+    query_text = word + " " + userContext
+    results = query_chromadb(query_text, top_k)
+
+    if not results:
+        return {"error": "No relevant documents found in ChromaDB."}
+
+    print(f"Retrieved {len(results)} results from ChromaDB.")
+
+    # Extract the document texts
+    context = " ".join([res["text"] for res in results])  
     llama_response = get_llama_response(word, userContext, context)
-    print(f"context: {context}")
-    print(f"***llama_response***: {llama_response}")
-    return {"query": word, "results": llama_response}
+
+    print(f"Selected Document by LLM: {llama_response}")
+
+    return {
+        "query": query_text,
+        "results": llama_response
+    }
 
 if __name__ == "__main__":
     import uvicorn

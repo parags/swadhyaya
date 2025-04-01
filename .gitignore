@@ -3,7 +3,6 @@ README.local-llm.md
 README.vectordb.md
 data/
 fa_server_llm.py
-rag_app/
 explorations
 
 .ipynb_checkpoints/
