@@ -129,7 +129,7 @@ def search(word: str = Query(..., description="Word to search for"),
 
         if llama_response:
             # Show the LLaMA model's response below the search box
-            json.dumps(llama_response)
+            return json.dumps(llama_response)
 
 if __name__ == "__main__":
     import uvicorn
